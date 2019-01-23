@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"errors"
-	"github.com/Deansquirrel/goZlDianzqOfferTicket/Object"
 	"github.com/Deansquirrel/goZlDianzqOfferTicketV2/common"
+	"github.com/Deansquirrel/goZlDianzqOfferTicketV2/global"
 	"github.com/Deansquirrel/goZlDianzqOfferTicketV2/object"
 	"strconv"
 	"strings"
@@ -22,6 +22,39 @@ type VersionInfo struct {
 	Ver  string
 	Date time.Time
 }
+
+//func (hx *HeXRepository)checkHxDbConn() bool{
+//	if heXDbConn == nil{
+//		return false
+//	}
+//	if len(heXDbConn) < 1{
+//		return false
+//	}
+//	for _,conn := range heXDbConn {
+//		if err := conn.Ping();err != nil {
+//			return false
+//		}
+//	}
+//	return true
+//}
+//
+//func (hx *HeXRepository)releaseHxDbConn(){
+//	if hx.checkHxDbConn() {
+//		for _,conn := range heXDbConn {
+//			_ = conn.Close()
+//		}
+//	}
+//}
+//
+//func (hx *HeXRepository) RefreshHxDbConn() error {
+//	hx.releaseHxDbConn()
+//	pZhR := PeiZhRepository{}
+//	dbConnInfo,err := pZhR.GetXtMappingDbConnInfo(global.SysConfig.Total.AppId,"DB_TicketHx","TicketHx")
+//	if err != nil {
+//		return err
+//	}
+//
+//}
 
 func (hx *HeXRepository) CreateLittleTktCreate(conn *sql.DB, tktInfo []object.TktInfo) error {
 
@@ -44,7 +77,7 @@ func (hx *HeXRepository) CreateLittleTktCreate(conn *sql.DB, tktInfo []object.Tk
 	}()
 
 	var c = make([]interface{}, 0)
-	var val Object.TktInfo
+	var val object.TktInfo
 	for i := 0; i < len(tktInfo); i++ {
 		val = tktInfo[i]
 		c = append(c, val.AppId)
@@ -104,14 +137,42 @@ func (hx *HeXRepository) GetVerInfo(conn *sql.DB) (ver VersionInfo, err error) {
 
 //解析配置字符串,并获取连接
 func (hx *HeXRepository) GetDbConnByString(s string) (*sql.DB, error) {
+	if global.HxDbConnMap == nil {
+		global.HxDbConnMap = make(map[string]*sql.DB)
+	}
+	var conn *sql.DB
+	if _, ok := global.HxDbConnMap[s]; ok {
+		conn = global.HxDbConnMap[s]
+		err := conn.Ping()
+		if err != nil {
+			delete(global.HxDbConnMap, s)
+			return hx.getNewConn(s)
+		} else {
+			return conn, nil
+		}
+	}
+	return hx.getNewConn(s)
+}
+
+func (hx *HeXRepository) getNewConn(s string) (*sql.DB, error) {
+	conn, err := hx.getDbConnByString(s)
+	if err != nil {
+		return nil, err
+	} else {
+		global.HxDbConnMap[s] = conn
+		return conn, nil
+	}
+}
+
+func (hx *HeXRepository) getDbConnByString(s string) (*sql.DB, error) {
 	config := strings.Split(s, "|")
 	if len(config) != 5 {
-		common.MyLog("数据库配置串解析失败 - " + s)
+		common.PrintAndLog("数据库配置串解析失败 - " + s)
 		return nil, errors.New("数据库配置串解析失败")
 	}
 	port, err := strconv.Atoi(config[1])
 	if err != nil {
-		common.MyLog("数据库配置串端口解析失败 - " + s)
+		common.PrintAndLog("数据库配置串端口解析失败 - " + s)
 		return nil, errors.New("数据库配置串端口解析失败")
 	}
 	return GetDbConn(config[0], port, config[2], config[3], config[4])

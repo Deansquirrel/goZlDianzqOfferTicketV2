@@ -1,10 +1,10 @@
-package object
+package yw
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Deansquirrel/goZlDianzqOfferTicket/common"
-	"github.com/Deansquirrel/goZlDianzqOfferTicket/global"
+	"github.com/Deansquirrel/goZlDianzqOfferTicketV2/common"
+	"github.com/Deansquirrel/goZlDianzqOfferTicketV2/global"
 	"io/ioutil"
 	"net/http"
 )
@@ -19,9 +19,9 @@ func GetTktNoMulti(num int) ([]string, error) {
 		return nil, err
 	}
 	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			common.MyLog(err.Error())
+		errLs := resp.Body.Close()
+		if errLs != nil {
+			common.PrintOrLog(errLs.Error())
 		}
 	}()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -40,9 +40,9 @@ func GetSno(prefix string) (string, error) {
 		return "", err
 	}
 	defer func() {
-		err := resp.Body.Close()
-		if err != nil {
-			common.MyLog(err.Error())
+		errLs := resp.Body.Close()
+		if errLs != nil {
+			common.PrintOrLog(errLs.Error())
 		}
 	}()
 	sno, err := ioutil.ReadAll(resp.Body)

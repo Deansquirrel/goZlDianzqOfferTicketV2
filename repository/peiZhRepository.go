@@ -1,57 +1,59 @@
 package repository
 
 import (
-	"database/sql"
-	"github.com/Deansquirrel/goZlDianzqOfferTicket/common"
-	"github.com/Deansquirrel/goZlDianzqOfferTicket/global"
+	"github.com/Deansquirrel/goZlDianzqOfferTicketV2/common"
+	"github.com/Deansquirrel/goZlDianzqOfferTicketV2/global"
 	"github.com/kataras/iris/core/errors"
-	"time"
 )
-
-var peiZhDbConn *sql.DB
 
 type PeiZhRepository struct {
 }
 
 //获取配置库连接对象
 func getPeiZhDbConn() error {
-	if CheckV(peiZhDbConn) {
+	if CheckV(global.PeiZhDbConn) {
 		return nil
 	}
-	conn, err := GetDbConn(global.Config.PeiZhDbConfig.Server, global.Config.PeiZhDbConfig.Port, global.Config.PeiZhDbConfig.DbName, global.Config.PeiZhDbConfig.User, global.Config.PeiZhDbConfig.PassWord)
+	conn, err := GetDbConn(global.SysConfig.PeiZhDb.Server,
+		global.SysConfig.PeiZhDb.Port,
+		global.SysConfig.PeiZhDb.DbName,
+		global.SysConfig.PeiZhDb.User,
+		global.SysConfig.PeiZhDb.Password)
 	if err != nil {
+		global.PeiZhDbConn = nil
 		return err
 	}
 
 	err = conn.Ping()
 	if err != nil {
+		global.PeiZhDbConn = nil
 		return err
 	}
 
-	conn.SetMaxIdleConns(30)
-	conn.SetMaxOpenConns(30)
-	conn.SetConnMaxLifetime(time.Second * 60 * 10)
-	peiZhDbConn = conn
+	//conn.SetMaxIdleConns(30)
+	//conn.SetMaxOpenConns(30)
+	//conn.SetConnMaxLifetime(time.Second * 60 * 10)
+	global.PeiZhDbConn = conn
 
 	return nil
 }
 
 //从xtwxappidjoininfo获取配置
 func (pzR *PeiZhRepository) GetXtWxAppIdJoinInfo(jPeiZh string, jKey string, jIsForbid int) (string, error) {
-	if !CheckV(peiZhDbConn) {
+	if !CheckV(global.PeiZhDbConn) {
 		err := getPeiZhDbConn()
 		if err != nil {
 			return "", err
 		}
 	}
 
-	conn := peiZhDbConn
-	defer func() {
-		errLs := conn.Close()
-		if errLs != nil {
-			common.MyLog(errLs.Error())
-		}
-	}()
+	conn := global.PeiZhDbConn
+	//defer func() {
+	//	errLs := conn.Close()
+	//	if errLs != nil {
+	//		common.PrintOrLog(errLs.Error())
+	//	}
+	//}()
 
 	stmt, err := conn.Prepare("" +
 		"SELECT jvalue FROM xtwxappidjoininfo " +
@@ -62,7 +64,7 @@ func (pzR *PeiZhRepository) GetXtWxAppIdJoinInfo(jPeiZh string, jKey string, jIs
 	defer func() {
 		errLs := stmt.Close()
 		if errLs != nil {
-			common.MyLog(errLs.Error())
+			common.PrintOrLog(errLs.Error())
 		}
 	}()
 
@@ -73,7 +75,7 @@ func (pzR *PeiZhRepository) GetXtWxAppIdJoinInfo(jPeiZh string, jKey string, jIs
 	defer func() {
 		errLs := rows.Close()
 		if errLs != nil {
-			common.MyLog(errLs.Error())
+			common.PrintOrLog(errLs.Error())
 		}
 	}()
 
@@ -96,20 +98,20 @@ func (pzR *PeiZhRepository) GetXtWxAppIdJoinInfo(jPeiZh string, jKey string, jIs
 
 //从xtmappingdbconn获取连接信息
 func (pzR *PeiZhRepository) GetXtMappingDbConnInfo(appId string, miKvName string, miIdType string) ([]dbConnInfo, error) {
-	if !CheckV(peiZhDbConn) {
+	if !CheckV(global.PeiZhDbConn) {
 		err := getPeiZhDbConn()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	conn := peiZhDbConn
-	defer func() {
-		errLs := conn.Close()
-		if errLs != nil {
-			common.MyLog(errLs.Error())
-		}
-	}()
+	conn := global.PeiZhDbConn
+	//defer func() {
+	//	errLs := conn.Close()
+	//	if errLs != nil {
+	//		common.PrintOrLog(errLs.Error())
+	//	}
+	//}()
 
 	stmt, err := conn.Prepare("" +
 		"select miid,mconnstr " +
@@ -120,7 +122,7 @@ func (pzR *PeiZhRepository) GetXtMappingDbConnInfo(appId string, miKvName string
 	defer func() {
 		errLs := stmt.Close()
 		if errLs != nil {
-			common.MyLog(errLs.Error())
+			common.PrintOrLog(errLs.Error())
 		}
 	}()
 
@@ -131,7 +133,7 @@ func (pzR *PeiZhRepository) GetXtMappingDbConnInfo(appId string, miKvName string
 	defer func() {
 		errLs := rows.Close()
 		if errLs != nil {
-			common.MyLog(errLs.Error())
+			common.PrintOrLog(errLs.Error())
 		}
 	}()
 

@@ -9,7 +9,7 @@ import (
 
 func StartWebServer() {
 	app := iris.New()
-	app.Post("/", handler)
+	app.Post("/CreateLittleTkt", handler)
 	addr := ":" + strconv.Itoa(global.SysConfig.Total.Port)
 	err := app.Run(iris.Addr(addr), iris.WithoutServerError(iris.ErrServerClosed), iris.WithOptimizations)
 	if err != nil {

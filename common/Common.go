@@ -41,34 +41,3 @@ func GetSysConfig(fileName string) (*object.SysConfig, error) {
 	}
 	return &config, nil
 }
-
-func RefreshConfig(config *object.SysConfig) error {
-	return nil
-}
-
-func rabbitMqInit() error {
-	conn, err := global.RabbitMQ.GetConn()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = conn.Close()
-	}()
-
-	err = global.RabbitMQ.QueueDeclareSimple(conn, "TktCreateYwdetail")
-	if err != nil {
-		return err
-	}
-
-	err = global.RabbitMQ.QueueBind(conn, "TktCreateYwdetail", "", "amq.fanout", true)
-	if err != nil {
-		return err
-	}
-
-	err = global.RabbitMQ.AddProducer("")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
